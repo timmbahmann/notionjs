@@ -10,6 +10,7 @@
 const generatePost = require("./post");
 const makeNotionMethods = require("./notionMethods");
 const makeGetRecords = require("./getRecords");
+const makeDownloadPage = require("./downloadPage");
 
 class Notion {
   constructor(token_v2 = undefined) {
