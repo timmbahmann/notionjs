@@ -1,5 +1,5 @@
 const axios = require("axios").default;
-require("dotenv").default();
+require("dotenv").config();
 
 const request = axios.create({
   baseURL: process.env.API_BASE_URL || "https://www.notion.so/api/v3/",
