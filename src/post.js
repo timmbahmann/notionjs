@@ -1,12 +1,5 @@
 const axios = require("axios").default;
 
-const request = axios.create({
-  baseURL: process.env.API_BASE_URL || "https://www.notion.so/api/v3/",
-  headers: {
-    cookie: `token_v2=${process.env.TOKEN_V2};`
-  }
-});
-
 const defaultData = {
   limit: 10000,
   cursor: { stack: [] },
@@ -17,6 +10,14 @@ const defaultData = {
 const defaultOptions = {};
 
 async function post(url, data = {}, options = {}) {
+  const request = axios.create({
+    baseURL: process.env.API_BASE_URL || "https://www.notion.so/api/v3/",
+    headers: {
+      cookie: `token_v2=${process.env.TOKEN_V2};`
+    }
+  });
+
+  console.log(request);
   const response = await request.post(
     url,
     { ...defaultData, ...data },
