@@ -1,38 +1,26 @@
-// const {
-//   getBlock,
-//   getCollection,
-//   getUser,
-//   getCollectionView,
-//   getSpace
-// } = require("./getRecords");
-// const downloadPage = require("./downloadPage");
+const {
+  getBlock,
+  getCollection,
+  getUser,
+  getCollectionView,
+  getSpace
+} = require("./getRecords");
+const downloadPage = require("./downloadPage");
 
-const generatePost = require("./post");
-const makeNotionMethods = require("./notionMethods");
-const makeGetRecords = require("./getRecords");
-const makeDownloadPage = require("./downloadPage");
-
-class Notion {
-  constructor(token_v2 = undefined) {
-    this.token_v2 = token_v2 || process.env.TOKEN_V2;
-    this.post = generatePost(token_v2);
-    const { loadPageChunk, getRecordValues } = makeNotionMethods(this.post);
-    const {
-      getBlock,
-      getCollection,
-      getUser,
-      getCollectionView,
-      getSpace
-    } = makeGetRecords(loadPageChunk, getRecordValues);
-    const downloadPage = makeDownloadPage(getBlock);
-
-    this.getBlock = getBlock;
-    this.getCollection = getCollection;
-    this.getCollectionView = getCollectionView;
-    this.getSpace = getSpace;
-    this.getUser = getUser;
-    this.downloadPage = downloadPage;
+function Notion() {
+  if (!process.env.TOKEN_V2) {
+    throw new Error(`Your TOKEN_V2 is undefined. 
+    You need it to use this API. You can find yours on your Notion page by looking at the cookies while logged in. 
+    For further help, please open an issue at https://github.com/Gamaranto/notionjs
+    `);
   }
 }
+
+Notion.prototype.getBlock = getBlock;
+Notion.prototype.getCollection = getCollection;
+Notion.prototype.getCollectionView = getCollectionView;
+Notion.prototype.getSpace = getSpace;
+Notion.prototype.getUser = getUser;
+Notion.prototype.downloadPage = downloadPage;
 
 module.exports = Notion;
