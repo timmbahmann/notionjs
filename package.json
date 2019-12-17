@@ -1,0 +1,26 @@
+{
+  "name": "notionjs",
+  "version": "1.0.0",
+  "description": "JavaScript client for the unofficial Notion API.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gamaranto/notionjs.git"
+  },
+  "keywords": [
+    "Notion"
+  ],
+  "author": "Gamaranto",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Gamaranto/notionjs/issues"
+  },
+  "homepage": "https://github.com/Gamaranto/notionjs#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "dotenv": "^8.2.0"
+  }
+}
