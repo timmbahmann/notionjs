@@ -1,16 +1,12 @@
 const extractID = require("./extractId");
-const { getBlock } = require("./getRecords");
 
-async function downloadPage(idOrUrl) {
-  var pageId = extractID(idOrUrl);
-  var rootBlock = await getPageRootBlock(pageId);
+function makeDownloadPage(getBlock) {
+  return async function downloadPage(idOrUrl) {
+    var pageId = extractID(idOrUrl);
+    var rootBlock = await getBlock(pageId);
 
-  return rootBlock;
+    return rootBlock;
+  };
 }
 
-module.exports = downloadPage;
-// ************************
-
-async function getPageRootBlock(pageId) {
-  return await getBlock(pageId);
-}
+module.exports = makeDownloadPage;
