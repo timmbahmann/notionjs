@@ -1,6 +1,6 @@
 {
   "name": "notionjs",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "JavaScript client for the unofficial Notion API.",
   "main": "src/index.js",
   "scripts": {
