@@ -17,7 +17,6 @@ async function post(url, data = {}, options = {}) {
     }
   });
 
-  console.log(request);
   const response = await request.post(
     url,
     { ...defaultData, ...data },
