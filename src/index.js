@@ -3,7 +3,8 @@ const {
   getCollection,
   getUser,
   getCollectionView,
-  getSpace
+  getSpace,
+  queryCollection
 } = require("./getRecords");
 const downloadPage = require("./downloadPage");
 
@@ -22,5 +23,6 @@ Notion.prototype.getCollectionView = getCollectionView;
 Notion.prototype.getSpace = getSpace;
 Notion.prototype.getUser = getUser;
 Notion.prototype.downloadPage = downloadPage;
+Notion.prototype.queryCollection = queryCollection;
 
 module.exports = Notion;

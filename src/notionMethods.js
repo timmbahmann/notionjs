@@ -15,4 +15,16 @@ async function loadPageChunk(pageId) {
   return recordMap;
 }
 
-module.exports = { getRecordValues, loadPageChunk };
+async function queryCollection(collectionId, collectionViewId, query, loader) {
+  var { data } =
+    (await post("queryCollection", {
+      collectionId,
+      collectionViewId,
+      query,
+      loader
+    })) || {};
+  var { recordMap } = data;
+  return recordMap;
+}
+
+module.exports = { getRecordValues, loadPageChunk, queryCollection };
