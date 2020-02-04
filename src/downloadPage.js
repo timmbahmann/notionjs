@@ -1,16 +1,14 @@
-const extractID = require("./extractId");
-const { getBlock } = require("./getRecords");
+import extractID from './extractId'
+import { getBlock } from './getRecords'
 
-async function downloadPage(idOrUrl) {
-  var pageId = extractID(idOrUrl);
-  var rootBlock = await getPageRootBlock(pageId);
+export default async function downloadPage(idOrUrl) {
+  var pageId = extractID(idOrUrl)
+  var rootBlock = await getPageRootBlock(pageId)
 
-  return rootBlock;
+  return rootBlock
 }
-
-module.exports = downloadPage;
 // ************************
 
 async function getPageRootBlock(pageId) {
-  return await getBlock(pageId);
+  return await getBlock(pageId)
 }
