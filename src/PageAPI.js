@@ -7,7 +7,7 @@ import Njs from './index'
  * @param {string} state - In which state should the pages be? ( could be one of 'Idee', 'Entwurf' or 'Veröffentlicht')
  * @param {number} [newLimit=10] - Maximum number of pages returned (default: 10)
  */
-export default function Page(collectionID, state, limit) {
+export default function Page(collectionID, state, filter, limit) {
   /**
    * The assosicated njs instance
    */
@@ -21,7 +21,7 @@ export default function Page(collectionID, state, limit) {
   /**
    * All pages with the current limit
    */
-  this.pages = getPages(limit, njs, collectionID, state)
+  this.pages = getPages(limit, njs, collectionID, state, filter)
 
   /**
    * Sets a new limit and retrieves all pages within this limit
@@ -29,7 +29,17 @@ export default function Page(collectionID, state, limit) {
    */
   this.setLimit = async function(newLimit) {
     limit = newLimit
-    this.pages = getPages(limit, state)
+    this.pages = getPages(limit, njs, collectionID, state, filter)
+    this.getPageBySlug = getPageBySlug(this.pages, state)
+  }
+
+  /**
+   * Sets a new filter and retrieves all pages matching the filter
+   * @param {Object} - A new filter object
+   */
+  this.setFilter = async function(newFilter) {
+    filter = newFilter
+    this.pages = getPages(limit, njs, collectionID, state, filter)
     this.getPageBySlug = getPageBySlug(this.pages, state)
   }
 
@@ -81,11 +91,11 @@ async function getPage(parentID, njs) {
   )
 }
 
-function getPages(limit, njs, collectionID, state) {
+function getPages(limit, njs, collectionID, state, filter) {
   return new Promise((resolve, reject) =>
     njs
       .downloadPage(collectionID)
-      .then(getCollectionFromPage(limit, njs))
+      .then(getCollectionFromPage(limit, njs, filter))
       .then(getPageSort)
       .then(getSchema)
       .then(getPagesArray(state))
@@ -94,12 +104,12 @@ function getPages(limit, njs, collectionID, state) {
   )
 }
 
-function getCollectionFromPage(limit, njs) {
+function getCollectionFromPage(limit, njs, filter) {
   return function(data) {
     return njs.queryCollection(
       Object.keys(data.collection)[0],
       Object.keys(data.collection_view)[0],
-      { aggregations: [] },
+      { aggregations: [], filter },
       {
         type: 'table',
         limit: limit,
