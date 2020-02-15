@@ -4,10 +4,9 @@ import Njs from './index'
  * Creates a new PageAPI.
  * @class
  * @param {string} collectionID - A number in the form of '09691d5a-403c-4754-b8f6-c73b0d71a8e9'
- * @param {string} state - In which state should the pages be? ( could be one of 'Idee', 'Entwurf' or 'Veröffentlicht')
  * @param {number} [newLimit=10] - Maximum number of pages returned (default: 10)
  */
-export default function Page(collectionID, state, filter, limit) {
+export default function Page(collectionID, filter, limit) {
   /**
    * The assosicated njs instance
    */
@@ -21,7 +20,7 @@ export default function Page(collectionID, state, filter, limit) {
   /**
    * All pages with the current limit
    */
-  this.pages = getPages(limit, njs, collectionID, state, filter)
+  this.pages = getPages(limit, njs, collectionID, filter)
 
   /**
    * Sets a new limit and retrieves all pages within this limit
@@ -29,8 +28,8 @@ export default function Page(collectionID, state, filter, limit) {
    */
   this.setLimit = async function(newLimit) {
     limit = newLimit
-    this.pages = getPages(limit, njs, collectionID, state, filter)
-    this.getPageBySlug = getPageBySlug(this.pages, state)
+    this.pages = getPages(limit, njs, collectionID, filter)
+    this.getPageBySlug = getPageBySlug(this.pages)
   }
 
   /**
@@ -39,8 +38,8 @@ export default function Page(collectionID, state, filter, limit) {
    */
   this.setFilter = async function(newFilter) {
     filter = newFilter
-    this.pages = getPages(limit, njs, collectionID, state, filter)
-    this.getPageBySlug = getPageBySlug(this.pages, state)
+    this.pages = getPages(limit, njs, collectionID, filter)
+    this.getPageBySlug = getPageBySlug(this.pages)
   }
 
   /**
@@ -48,17 +47,17 @@ export default function Page(collectionID, state, filter, limit) {
    * @property {string} slug - The slug name of the page
    * @returns {Promise} Returns a promise with all block and its properties inside an array
    */
-  this.getPageBySlug = getPageBySlug(this.pages, state, njs)
+  this.getPageBySlug = getPageBySlug(this.pages, njs)
 }
 
-let getPageBySlug = (p, state, njs) => async slug => {
-  let page = await getPageMetaBySlug(p, state)(slug)
+let getPageBySlug = (p, njs) => async slug => {
+  let page = await getPageMetaBySlug(p)(slug)
   return await getPage(page.blockID, njs)
 }
 
-let getPageMetaBySlug = (p, state) => async slug => {
+let getPageMetaBySlug = p => async slug => {
   let pages = await p
-  const i = pages.findIndex(page => page.Slug === slug && page.Status === state)
+  const i = pages.findIndex(page => page.Slug === slug)
   if (i >= 0) {
     return pages[i]
   } else {
@@ -91,21 +90,33 @@ async function getPage(parentID, njs) {
   )
 }
 
-function getPages(limit, njs, collectionID, state, filter) {
+function getPages(limit, njs, collectionID, filter) {
   return new Promise((resolve, reject) =>
     njs
       .downloadPage(collectionID)
       .then(getCollectionFromPage(limit, njs, filter))
       .then(getPageSort)
       .then(getSchema)
-      .then(getPagesArray(state))
+      .then(getPagesArray)
       .then(resolve)
       .catch(reject)
   )
 }
 
+function setCorrectFilterProperty(data, filter) {
+  let schema = Object.values(data.collection)[0].value.schema
+  for (let i = 0; i < filter.filters.length; i++) {
+    filter.filters[i].property = Object.keys(schema).find(
+      key => schema[key].name === filter.filters[i].property
+    )
+  }
+  return filter.filters
+}
+
 function getCollectionFromPage(limit, njs, filter) {
   return function(data) {
+    filter.filters = setCorrectFilterProperty(data, filter)
+    console.log('filter', filter)
     return njs.queryCollection(
       Object.keys(data.collection)[0],
       Object.keys(data.collection_view)[0],
@@ -183,9 +194,8 @@ let reducePages = (props, page) => (prev, tag) => {
   return prev
 }
 
-let getPagesArray = state =>
-  function({ pageSort, props }) {
-    return pageSort
-      .map(page => Object.keys(page).reduce(reducePages(props, page), {}))
-      .filter(page => page.Status === state)
-  }
+function getPagesArray({ pageSort, props }) {
+  return pageSort.map(page =>
+    Object.keys(page).reduce(reducePages(props, page), {})
+  )
+}
