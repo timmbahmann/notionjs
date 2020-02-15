@@ -33,6 +33,11 @@ export default function Page(collectionID, state, limit) {
     this.getPageBySlug = getPageBySlug(this.pages, state)
   }
 
+  /**
+   * Gets all blocks from a page in the pages property with the given slug name
+   * @property {string} slug - The slug name of the page
+   * @returns {Promise} Returns a promise with all block and its properties inside an array
+   */
   this.getPageBySlug = getPageBySlug(this.pages, state, njs)
 }
 
