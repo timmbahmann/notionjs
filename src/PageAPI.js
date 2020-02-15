@@ -39,7 +39,7 @@ export default function Page(collectionID, filter, limit) {
   this.setFilter = async function(newFilter) {
     filter = newFilter
     this.pages = getPages(limit, njs, collectionID, filter)
-    this.getPageBySlug = getPageBySlug(this.pages)
+    this.getPageBySlug = getPageBySlug(this.pages, njs)
   }
 
   /**
@@ -104,19 +104,19 @@ function getPages(limit, njs, collectionID, filter) {
 }
 
 function setCorrectFilterProperty(data, filter) {
+  if (!filter) return undefined
   let schema = Object.values(data.collection)[0].value.schema
   for (let i = 0; i < filter.filters.length; i++) {
     filter.filters[i].property = Object.keys(schema).find(
       key => schema[key].name === filter.filters[i].property
     )
   }
-  return filter.filters
+  return filter
 }
 
 function getCollectionFromPage(limit, njs, filter) {
   return function(data) {
-    filter.filters = setCorrectFilterProperty(data, filter)
-    console.log('filter', filter)
+    filter = setCorrectFilterProperty(data, filter)
     return njs.queryCollection(
       Object.keys(data.collection)[0],
       Object.keys(data.collection_view)[0],
