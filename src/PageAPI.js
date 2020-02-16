@@ -20,26 +20,48 @@ export default function Page(collectionID, filter, limit) {
   /**
    * All pages with the current limit
    */
-  this.pages = getPages(limit, njs, collectionID, filter)
+  this.getPages = getPages(limit, njs, collectionID, filter)
 
   /**
    * Sets a new limit and retrieves all pages within this limit
    * @param {number} newLimit - The new maximum number of pages retrieved
    */
-  this.setLimit = async function(newLimit) {
+  this.setLimit = function(newLimit) {
     limit = newLimit
-    this.pages = getPages(limit, njs, collectionID, filter)
-    this.getPageBySlug = getPageBySlug(this.pages, njs)
+    this.getPages = getPages(limit, njs, collectionID, filter)
   }
 
   /**
    * Sets a new filter and retrieves all pages matching the filter
    * @param {Object} - A new filter object
    */
-  this.setFilter = async function(newFilter) {
-    filter = newFilter
-    this.pages = getPages(limit, njs, collectionID, filter)
-    this.getPageBySlug = getPageBySlug(this.pages, njs)
+  this.setFilter = function(newFilter) {
+    filter = JSON.parse(JSON.stringify(newFilter))
+    this.getPages = getPages(limit, njs, collectionID, filter)
+  }
+
+  /**
+   * Gets an Array of tags and sets the corresponding filter
+   * @param {string[]} tags - An array of tags that should be filtered by
+   */
+  this.setFilterByTags = function(tags) {
+    let filters = tags.map(tag => {
+      return {
+        property: 'Tags',
+        filter: {
+          operator: 'enum_contains',
+          value: {
+            type: 'exact',
+            value: tag
+          }
+        }
+      }
+    })
+    filter = {
+      operator: 'and',
+      filters
+    }
+    this.getPages = getPages(limit, njs, collectionID, filter)
   }
 
   /**
@@ -47,21 +69,20 @@ export default function Page(collectionID, filter, limit) {
    * @property {string} slug - The slug name of the page
    * @returns {Promise} Returns a promise with all block and its properties inside an array
    */
-  this.getPageBySlug = getPageBySlug(this.pages, njs)
+  this.getPageBySlug = getPageBySlug(njs)
 }
 
-let getPageBySlug = (p, njs) => async slug => {
+let getPageBySlug = njs => async (p, slug) => {
   let page = await getPageMetaBySlug(p)(slug)
   return await getPage(page.blockID, njs)
 }
 
-let getPageMetaBySlug = p => async slug => {
-  let pages = await p
+let getPageMetaBySlug = pages => async slug => {
   const i = pages.findIndex(page => page.Slug === slug)
   if (i >= 0) {
     return pages[i]
   } else {
-    throw new Error('Page not found')
+    throw new Error('Page not found ' + slug)
   }
 }
 
@@ -91,25 +112,28 @@ async function getPage(parentID, njs) {
 }
 
 function getPages(limit, njs, collectionID, filter) {
-  return new Promise((resolve, reject) =>
-    njs
-      .downloadPage(collectionID)
-      .then(getCollectionFromPage(limit, njs, filter))
-      .then(getPageSort)
-      .then(getSchema)
-      .then(getPagesArray)
-      .then(resolve)
-      .catch(reject)
-  )
+  return function() {
+    return new Promise((resolve, reject) =>
+      njs
+        .downloadPage(collectionID)
+        .then(getCollectionFromPage(limit, njs, filter))
+        .then(getPageSort)
+        .then(getSchema)
+        .then(getPagesArray)
+        .then(resolve)
+        .catch(reject)
+    )
+  }
 }
 
 function setCorrectFilterProperty(data, filter) {
   if (!filter) return undefined
   let schema = Object.values(data.collection)[0].value.schema
   for (let i = 0; i < filter.filters.length; i++) {
-    filter.filters[i].property = Object.keys(schema).find(
-      key => schema[key].name === filter.filters[i].property
-    )
+    filter.filters[i].property =
+      Object.keys(schema).find(
+        key => schema[key].name === filter.filters[i].property
+      ) || filter.filters[i].property
   }
   return filter
 }
@@ -117,18 +141,25 @@ function setCorrectFilterProperty(data, filter) {
 function getCollectionFromPage(limit, njs, filter) {
   return function(data) {
     filter = setCorrectFilterProperty(data, filter)
-    return njs.queryCollection(
-      Object.keys(data.collection)[0],
-      Object.keys(data.collection_view)[0],
-      { aggregations: [], filter },
-      {
-        type: 'table',
-        limit: limit,
-        searchQuery: '',
-        userTimeZone: 'Europe/Berlin',
-        userLocale: 'de',
-        loadContentCover: false
-      }
+    return new Promise((resolve, reject) =>
+      njs
+        .queryCollection(
+          Object.keys(data.collection)[0],
+          Object.keys(data.collection_view)[0],
+          { aggregations: [], filter },
+          {
+            type: 'table',
+            limit: limit,
+            searchQuery: '',
+            userTimeZone: 'Europe/Berlin',
+            userLocale: 'de',
+            loadContentCover: false
+          }
+        )
+        .then(data => {
+          resolve(data)
+        })
+        .catch(reject)
     )
   }
 }
@@ -142,32 +173,45 @@ let reduceProps = blocks => (prev, key) => {
   return prev
 }
 
-function getPropsFromBlocks(blocks) {
-  return Object.keys(blocks)
-    .filter(key => blocks[key].value && blocks[key].value.properties)
-    .reduce(reduceProps(blocks), {})
+function getPropsFromBlocks(data) {
+  return Object.keys(data.block)
+    .filter(
+      key =>
+        data.block[key].value &&
+        data.block[key].value.properties &&
+        data.block[key].value.parent_id === Object.keys(data.collection)[0]
+    )
+    .reduce(reduceProps(data.block), {})
 }
 
 function getPageSort(data) {
-  let propsFromBlock = getPropsFromBlocks(data.block)
-  return {
-    data,
-    pageSort: Object.values(data.collection_view)[0]
-      .value.page_sort.map(key => propsFromBlock[key])
-      .filter(key => key)
-  }
+  return new Promise((resolve, reject) => {
+    let propsFromBlock = getPropsFromBlocks(data)
+    let pageSort = {
+      data,
+      pageSort: Object.values(data.collection_view)[0]
+        .value.page_sort.map(key => propsFromBlock[key])
+        .filter(key => key)
+    }
+    resolve(pageSort)
+  })
 }
 
 function getSchema({ data, pageSort }) {
-  let schema = Object.values(data.collection)[0].value.schema
-  let props = Object.keys(schema).reduce((prev, key) => {
-    prev[key] = schema[key].name
-    return prev
-  }, {})
-  return {
-    pageSort,
-    props
-  }
+  return new Promise((resolve, reject) => {
+    let schema = Object.values(data.collection)[0].value.schema
+    let props = Object.keys(schema).reduce((prev, key) => {
+      prev[key] = {
+        name: schema[key].name,
+        meta: schema[key].name === 'Tags' ? schema[key].options : undefined
+      }
+      return prev
+    }, {})
+    resolve({
+      pageSort,
+      props
+    })
+  })
 }
 
 function getTagByType(page, tagName, tag) {
@@ -180,6 +224,8 @@ function getTagByType(page, tagName, tag) {
       return page[tag][0][0]
     case 'Veröffentlichungsdatum':
       return page[tag][0][1][0][1].start_date
+    case 'Featured':
+      return page[tag][0][0] === 'Yes'
     default:
       return page[tag]
   }
@@ -189,13 +235,18 @@ let reducePages = (props, page) => (prev, tag) => {
   if (tag === 'image' || tag === 'blockID') {
     prev[tag] = page[tag]
   } else {
-    prev[props[tag]] = getTagByType(page, props[tag], tag)
+    prev[props[tag].name] = getTagByType(page, props[tag].name, tag)
   }
   return prev
 }
 
 function getPagesArray({ pageSort, props }) {
-  return pageSort.map(page =>
-    Object.keys(page).reduce(reducePages(props, page), {})
+  return new Promise((resolve, reject) =>
+    resolve({
+      pages: pageSort.map(page =>
+        Object.keys(page).reduce(reducePages(props, page), {})
+      ),
+      tags: Object.values(props).find(value => value.name === 'Tags').meta
+    })
   )
 }
