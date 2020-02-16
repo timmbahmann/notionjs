@@ -232,10 +232,24 @@ function getTagByType(page, tagName, tag) {
 }
 
 let reducePages = (props, page) => (prev, tag) => {
-  if (tag === 'image' || tag === 'blockID') {
-    prev[tag] = page[tag]
-  } else {
-    prev[props[tag].name] = getTagByType(page, props[tag].name, tag)
+  switch (tag) {
+    case 'image':
+      if (page[tag].startsWith('/')) {
+        prev[tag] = 'https://notion.so' + page[tag]
+      } else if (
+        page[tag].includes('amazonaws') &&
+        page[tag].includes('notion')
+      ) {
+        prev[tag] = 'https://notion.so/image/' + encodeURIComponent(page[tag])
+      } else {
+        prev[tag] = page[tag]
+      }
+      break
+    case 'blockID':
+      prev[tag] = page[tag]
+      break
+    default:
+      prev[props[tag].name] = getTagByType(page, props[tag].name, tag)
   }
   return prev
 }
