@@ -29,7 +29,7 @@ export default function Page(collectionID, filter, limit) {
   this.setLimit = async function(newLimit) {
     limit = newLimit
     this.pages = getPages(limit, njs, collectionID, filter)
-    this.getPageBySlug = getPageBySlug(this.pages)
+    this.getPageBySlug = getPageBySlug(this.pages, njs)
   }
 
   /**
