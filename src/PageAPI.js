@@ -104,11 +104,20 @@ let mapBlocks = njs =>
 
 async function getPage(parentID, njs) {
   let b = await njs.downloadPage(parentID)
-  return Promise.all(
-    Object.values(b.block)
-      .filter(bl => bl.value.parent_id === parentID)
-      .map(mapBlocks(njs))
-  )
+  return {
+    blocks: await Promise.all(
+      Object.values(b.block)
+        .filter(bl => bl.value.parent_id === parentID)
+        .map(mapBlocks(njs))
+    ),
+    format: b.block[parentID].value.format,
+    properties: Object.keys(b.block[parentID].value.properties).map(key => {
+      return {
+        name: Object.values(b.collection)[0].value.schema[key].name,
+        value: b.block[parentID].value.properties[key]
+      }
+    })
+  }
 }
 
 function getPages(limit, njs, collectionID, filter) {
@@ -235,12 +244,17 @@ let reducePages = (props, page) => (prev, tag) => {
   switch (tag) {
     case 'image':
       if (page[tag].startsWith('/')) {
-        prev[tag] = 'https://notion.so' + page[tag]
+        prev[tag] =
+          'https://notion.so/image/' +
+          encodeURIComponent('https://notion.so' + page[tag]) +
+          '?width=520'
       } else if (
         page[tag].includes('amazonaws') &&
         page[tag].includes('notion')
       ) {
         prev[tag] = 'https://notion.so/image/' + encodeURIComponent(page[tag])
+      } else if (page[tag].includes('images.unsplash.com')) {
+        prev[tag] = page[tag] + '&w=520'
       } else {
         prev[tag] = page[tag]
       }
