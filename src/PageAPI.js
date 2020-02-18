@@ -65,6 +65,28 @@ export default function Page(collectionID, filter, limit) {
   }
 
   /**
+   * @returns {Promise<Object[]>} Up to five featured articles
+   */
+  this.getFeaturedArticles = async function() {
+    let FeaturedArticleFilter = {
+      operator: 'and',
+      filters: [
+        {
+          property: 'Featured',
+          filter: {
+            operator: 'checkbox_is',
+            value: {
+              type: 'exact',
+              value: true
+            }
+          }
+        }
+      ]
+    }
+    return await getPages(5, njs, collectionID, FeaturedArticleFilter)()
+  }
+
+  /**
    * Gets all blocks from a page in the pages property with the given slug name
    * @property {string} slug - The slug name of the page
    * @returns {Promise} Returns a promise with all block and its properties inside an array
