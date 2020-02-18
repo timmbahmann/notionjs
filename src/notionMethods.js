@@ -29,5 +29,6 @@ export async function queryCollection(
       loader
     })) || {}
   var { recordMap } = data
+  recordMap.total = data.result.total
   return recordMap
 }
