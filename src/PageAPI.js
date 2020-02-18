@@ -32,6 +32,13 @@ export default function Page(collectionID, filter, limit) {
   }
 
   /**
+   * @returns {number} The current limit
+   */
+  this.getLimit = function() {
+    return limit
+  }
+
+  /**
    * Sets a new filter and retrieves all pages matching the filter
    * @param {Object} - A new filter object
    */
