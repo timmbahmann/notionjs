@@ -149,11 +149,13 @@ let mapBlocks = njs =>
       return {
         type: block.value.type,
         props: block.value.properties,
+        format: block.value.format,
         page
       }
     }
     return {
       type: block.value.type,
+      format: block.value.format,
       props: block.value.properties
     }
   }
