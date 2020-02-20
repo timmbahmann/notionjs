@@ -138,6 +138,9 @@ export default function Page (collectionID, filter, limit) {
       .options.map(option => option.value)
     return tags
   }
+  this.getLinkMetaByID = function (id) {
+    return njs.getBlock(id)
+  }
 
   this.getPage = id => getPage(id, njs)
 }
