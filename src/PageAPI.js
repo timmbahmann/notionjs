@@ -118,7 +118,7 @@ export default function Page (collectionID, filter, limit) {
       ]
     }
     let pageMeta = await getPages(1, njs, this.meta, slugFilter)()
-    return getPage(pageMeta[0].blockID, njs)
+    return getPage(pageMeta.pages[0].blockID, njs)
   }
 
   this.getRootPageMeta = function () {
