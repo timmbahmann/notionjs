@@ -6,7 +6,7 @@ import Njs from './index'
  * @param {string} collectionID - A number in the form of '09691d5a-403c-4754-b8f6-c73b0d71a8e9'
  * @param {number} [newLimit=10] - Maximum number of pages returned (default: 10)
  */
-export default function Page(collectionID, filter, limit) {
+export default function Page (collectionID, filter, limit) {
   /**
    * The assosicated njs instance
    */
@@ -26,7 +26,7 @@ export default function Page(collectionID, filter, limit) {
    * Sets a new limit and retrieves all pages within this limit
    * @param {number} newLimit - The new maximum number of pages retrieved
    */
-  this.setLimit = function(newLimit) {
+  this.setLimit = function (newLimit) {
     limit = newLimit
     this.getPages = getPages(limit, njs, this.meta, filter)
   }
@@ -34,7 +34,7 @@ export default function Page(collectionID, filter, limit) {
   /**
    * @returns {number} The current limit
    */
-  this.getLimit = function() {
+  this.getLimit = function () {
     return limit
   }
 
@@ -42,7 +42,7 @@ export default function Page(collectionID, filter, limit) {
    * Sets a new filter and retrieves all pages matching the filter
    * @param {Object} - A new filter object
    */
-  this.setFilter = function(newFilter) {
+  this.setFilter = function (newFilter) {
     filter = JSON.parse(JSON.stringify(newFilter))
     this.getPages = getPages(limit, njs, this.meta, filter)
   }
@@ -51,7 +51,7 @@ export default function Page(collectionID, filter, limit) {
    * Gets an Array of tags and sets the corresponding filter
    * @param {string[]} tags - An array of tags that should be filtered by
    */
-  this.setFilterByTags = function(tags) {
+  this.setFilterByTags = function (tags) {
     let filters = tags.map(tag => {
       return {
         property: 'Tags',
@@ -77,7 +77,7 @@ export default function Page(collectionID, filter, limit) {
   /**
    * @returns {Promise<Object[]>} Up to five featured articles
    */
-  this.getFeaturedArticles = async function() {
+  this.getFeaturedArticles = async function () {
     let FeaturedArticleFilter = {
       operator: 'and',
       filters: [
@@ -101,7 +101,7 @@ export default function Page(collectionID, filter, limit) {
    * @property {string} slug - The slug name of the page
    * @returns {Promise} Returns a promise with all block and its properties inside an array
    */
-  this.getPageBySlug = async function(slug) {
+  this.getPageBySlug = async function (slug) {
     let slugFilter = {
       operator: 'and',
       filters: [
@@ -121,16 +121,16 @@ export default function Page(collectionID, filter, limit) {
     return getPage(pageMeta[0].blockID, njs)
   }
 
-  this.getRootPageMeta = function() {
+  this.getRootPageMeta = function () {
     return njs.downloadPage(collectionID)
   }
 
-  this.setMeta = function(meta) {
+  this.setMeta = function (meta) {
     this.meta = meta
     this.getPages = getPages(limit, njs, meta, filter)
   }
 
-  this.getTagsFromRoot = function() {
+  this.getTagsFromRoot = function () {
     let tags = Object.values(
       Object.values(this.meta.collection)[0].value.schema
     )
@@ -140,22 +140,8 @@ export default function Page(collectionID, filter, limit) {
   }
 }
 
-let getPageBySlug = njs => async (pages, slug) => {
-  let page = await getPageMetaBySlug(pages)(slug)
-  return await getPage(page.blockID, njs)
-}
-
-let getPageMetaBySlug = pages => async slug => {
-  const i = pages.findIndex(page => page.Slug === slug)
-  if (i >= 0) {
-    return pages[i]
-  } else {
-    throw new Error('Page not found ' + slug)
-  }
-}
-
 let mapBlocks = njs =>
-  async function(block) {
+  async function (block) {
     if (block.value.type === 'toggle') {
       let page = await getPage(block.value.id, njs)
       return {
@@ -170,7 +156,7 @@ let mapBlocks = njs =>
     }
   }
 
-async function getPage(parentID, njs) {
+async function getPage (parentID, njs) {
   let b = await njs.downloadPage(parentID)
   let props = Object.keys(b.block[parentID].value.properties).reduce(
     (prev, key) => {
@@ -197,8 +183,8 @@ async function getPage(parentID, njs) {
   return page
 }
 
-function getPages(limit, njs, meta, filter) {
-  return function(rootPageMeta) {
+function getPages (limit, njs, meta, filter) {
+  return function (rootPageMeta) {
     return new Promise((resolve, reject) =>
       getCollectionFromPage(
         limit,
@@ -215,7 +201,7 @@ function getPages(limit, njs, meta, filter) {
   }
 }
 
-function setCorrectFilterProperty(data, filter) {
+function setCorrectFilterProperty (data, filter) {
   if (!filter) return undefined
   let schema = Object.values(data.collection)[0].value.schema
   for (let i = 0; i < filter.filters.length; i++) {
@@ -227,8 +213,8 @@ function setCorrectFilterProperty(data, filter) {
   return filter
 }
 
-function getCollectionFromPage(limit, njs, filter, data) {
-  return function() {
+function getCollectionFromPage (limit, njs, filter, data) {
+  return function () {
     filter = setCorrectFilterProperty(data, filter)
     return new Promise((resolve, reject) =>
       njs
@@ -262,7 +248,7 @@ let reduceProps = blocks => (prev, key) => {
   return prev
 }
 
-function getPropsFromBlocks(data) {
+function getPropsFromBlocks (data) {
   return Object.keys(data.block)
     .filter(
       key =>
@@ -273,7 +259,7 @@ function getPropsFromBlocks(data) {
     .reduce(reduceProps(data.block), {})
 }
 
-function getPageSort(data) {
+function getPageSort (data) {
   return new Promise((resolve, reject) => {
     let propsFromBlock = getPropsFromBlocks(data)
     let pageSort = {
@@ -287,7 +273,7 @@ function getPageSort(data) {
   })
 }
 
-function getSchema({ data, pageSort, total }) {
+function getSchema ({ data, pageSort, total }) {
   return new Promise((resolve, reject) => {
     let schema = Object.values(data.collection)[0].value.schema
     let props = Object.keys(schema).reduce((prev, key) => {
@@ -305,7 +291,7 @@ function getSchema({ data, pageSort, total }) {
   })
 }
 
-function getTagByType(page, tagName, tag) {
+function getTagByType (page, tagName, tag) {
   switch (tagName) {
     case 'Tags':
     case 'Vorschautext':
@@ -325,22 +311,6 @@ function getTagByType(page, tagName, tag) {
 let reducePages = (props, page) => (prev, tag) => {
   switch (tag) {
     case 'image':
-      if (page[tag].startsWith('/')) {
-        prev[tag] =
-          'https://notion.so/image/' +
-          encodeURIComponent('https://notion.so' + page[tag]) +
-          '?width=520'
-      } else if (
-        page[tag].includes('amazonaws') &&
-        page[tag].includes('notion')
-      ) {
-        prev[tag] = 'https://notion.so/image/' + encodeURIComponent(page[tag])
-      } else if (page[tag].includes('images.unsplash.com')) {
-        prev[tag] = page[tag] + '&w=520'
-      } else {
-        prev[tag] = page[tag]
-      }
-      break
     case 'blockID':
       prev[tag] = page[tag]
       break
@@ -350,7 +320,7 @@ let reducePages = (props, page) => (prev, tag) => {
   return prev
 }
 
-function getPagesArray({ pageSort, props, total }) {
+function getPagesArray ({ pageSort, props, total }) {
   return new Promise((resolve, reject) =>
     resolve({
       pages: pageSort.map(page =>
