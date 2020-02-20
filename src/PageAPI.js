@@ -160,19 +160,22 @@ let mapBlocks = njs =>
 
 async function getPage (parentID, njs) {
   let b = await njs.downloadPage(parentID)
-  let props = Object.keys(b.block[parentID].value.properties).reduce(
-    (prev, key) => {
-      prev[
-        Object.values(b.collection)[0].value.schema[key].name
-      ] = getTagByType(
-        b.block[parentID].value.properties,
-        Object.values(b.collection)[0].value.schema[key].name,
-        key
-      )
-      return prev
-    },
-    {}
-  )
+  let props = {}
+  if (b.collection) {
+    props = Object.keys(b.block[parentID].value.properties).reduce(
+      (prev, key) => {
+        prev[
+          Object.values(b.collection)[0].value.schema[key].name
+        ] = getTagByType(
+          b.block[parentID].value.properties,
+          Object.values(b.collection)[0].value.schema[key].name,
+          key
+        )
+        return prev
+      },
+      {}
+    )
+  }
   let page = {
     blocks: await Promise.all(
       Object.values(b.block)
