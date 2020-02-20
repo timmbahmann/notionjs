@@ -138,6 +138,8 @@ export default function Page (collectionID, filter, limit) {
       .options.map(option => option.value)
     return tags
   }
+
+  this.getPage = id => getPage(id, njs)
 }
 
 let mapBlocks = njs =>
